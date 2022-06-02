@@ -85,17 +85,16 @@ void help()
 void insert()//本函数将实现添加居民信息的功能
 {
 	FILE* fp1;
-	int k;
-	char note[100]="无"; //用于备注，初始化为无信息
+	int k;//判断
 	int i=0;//用于记录已录入的人数
-	if ((fp1 = fopen("F:\\register_ID.txt", "w")) == NULL)
+	if ((fp1 = fopen("F:\\register_ID.txt", "w")) == NULL)//打开文件，没有则新建
 	{
 		printf("打开文件失败\n");
 		exit(0);
 	}
 	else
 	{
-		fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");
+		fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");//输入信息的栏目
 		while (1)
 		{
 			
