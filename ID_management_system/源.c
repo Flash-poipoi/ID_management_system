@@ -7,30 +7,35 @@
 struct people
 {
 	char name[30];//姓名
-	char ID[20];//定义身份证号,18位身份证号，最后第19个元素存放字符终止符
+	char ID[19];//定义身份证号,18位身份证号，最后第19个元素存放字符终止符
 	char sex[3]; //性别
-	char area[1000];//所在地区，
+	char area[1000];//户籍所在地区
 	int year;//出生日期
 	int month;
 	int day;
 	char note[100];
 } person[N];
-int k = 1;
+int  n = 0;//n代表当前录入的人数
+int flag;
 void trans_ID();
 void help();
 void seek();
-
+void in_read();
 void insert();
 void del();
 void display();
 void save();
 void menu();
-
-int main()//本程序将实现输入ID后，读取相应信息，再实现居民信息的添加、删除、查找、排序、筛选、刷新和保存功能
+void in_write();
+//本程序将实现输入ID后，读取相应信息，再实现居民信息的添加、删除、查找、排序、筛选、刷新和保存功能
+int main()
 { 
 	
-
+	
 	insert();
+	del();
+	
+	
 	system("pause");
 	return 0;
 }
@@ -82,50 +87,62 @@ void help()
 	default:printf("请在0-8之间选择\n");
 	}
 }*/
-void insert()//本函数将实现添加居民信息的功能
+//本函数将实现添加居民信息的功能
+void insert()
 {
-	FILE* fp1;
-	int k;//判断
-	int i=0;//用于记录已录入的人数
-	if ((fp1 = fopen("F:\\register_ID.txt", "w")) == NULL)//打开文件，没有则新建
-	{
-		printf("打开文件失败\n");
-		exit(0);
-	}
-	else
-	{
-		fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");//输入信息的栏目
-		while (1)
-		{
-			
-			trans_ID(fp1, &person[i]); 
-			printf("请输入姓名:");
-			
-			fgets(person[i].name,30,stdin);	
-			person[i].name[strlen(person[i].name) - 1] = '\0';
-			
-			printf("请输入需要备注的信息：");
-			
-			fgets(person[i].note, 100, stdin);
-			person[i].note[strlen(person[i].note) - 1] = '\0';
-			fprintf(fp1,"%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, person[i].year,person[i].month,person[i].day,person[i].area,person[i].ID,person[i].note);
-			
-			printf("是否继续添加居民信息,非0继续/0终止,当前已录入人数%d\n",i+1);
-			scanf("%d", &k);
-			rewind(stdin);//刷新输入缓冲区
-			
-				if (k == 0)
-				{
-					break;
-					fclose(fp1);
-				}
-				i++;
-		}
-	}
 	
+	 
+	int k;//判断
+	int i=0,j;//用于记录已录入的人数
+	int flag;
+	while (1)
+	{
+		printf("请输入十八位身份证号：");
+		flag = 1;//确保能顺利进入循环
+		while (flag)
+		{
+			flag = 0;//考虑了只有一组数据的情况
+			fgets(person[i].ID, 19, stdin);
+			rewind(stdin);//刷新输入缓冲区
+			for (j = 0; j <i; j++)
+			{
+				if (strcmp(person[i].ID, person[j].ID) == 0)
+				{
+					printf("输入ID重复请重新输入\n");
+					flag = 1;//确保了能在while循环中重新输入ID
+					break;
+				}
+				
+				
+			}
+		}
+		trans_ID( &person[i]); 
+		printf("请输入姓名:");
+			
+		fgets(person[i].name,30,stdin);	
+		person[i].name[strlen(person[i].name) - 1] = '\0';//防止换行
+			
+		printf("请输入需要备注的信息：");
+			
+		fgets(person[i].note, 100, stdin);
+		person[i].note[strlen(person[i].note) - 1] = '\0';
+			
+		printf("是否继续添加居民信息,非0继续/0终止,当前已录入人数%d\n",i+1);
+		scanf("%d", &k);
+		rewind(stdin);//刷新输入缓冲区
+		if (k == 0)
+		{
+			n += i + 1;//保存了人数，方便后续写入文件
+			
+			break;
+		}
+		i++;
+	}
+	in_write();
 	
 }
-void trans_ID(FILE *fp1,struct people *person)//将已知身份证号转换为具体信息
+//将已知身份证号转换为具体信息
+void trans_ID(struct people *person)
 {
 	FILE* fp;
 	int i;
@@ -141,10 +158,7 @@ void trans_ID(FILE *fp1,struct people *person)//将已知身份证号转换为具体信息
 	else
 	{
 		
-		printf("请输入十八位身份证号：(请不要输入多余数字)");
 		
-			fgets(person->ID,19,stdin);
-			rewind(stdin);//刷新输入缓冲区
 		
 		
 		while ((strncmp(person->ID, code_area, 6) != 0))//比较身份证号前六位和文件中的地区编码
@@ -184,4 +198,132 @@ void trans_ID(FILE *fp1,struct people *person)//将已知身份证号转换为具体信息
 		
 	}
 	fclose(fp);
+}
+//本函数将根据身份证号删除居民的信息。由于对已有文件的内容进行删除操作有些困难，本函数采用读取文件到结构体数组后，再进行删除操作，最后对文件内容更新的方法
+void del()
+{
+	
+	char ID[19]; int i, j, flag = 0,k;//flag记录是否删除成功
+	in_read();
+	while (1)
+	{
+		printf("请输入要删除的居民的身份证号：");
+		gets_s(ID, 19);//输入待删除居民信息的身份证号
+		rewind(stdin);//刷新输入缓冲区
+		for (i = 0; i < n; i++)
+		{
+			if (strcmp(ID, person[i].ID) == 0)
+			{
+				flag = 1;
+				for (j = i; j < n - 1; j++)//将所删除居民之后居民往前移动一位
+					person[i] = person[i + 1];
+			}
+		}
+		if (flag == 1)
+		{
+			printf("删除成功\n");
+			n--;//录入总人数减一
+			in_write();
+		}
+		else
+		{
+			printf("删除失败\n");
+		}
+		printf("是否继续？[0]No/[>1]Yes\n");
+		scanf("%d", &k);
+		rewind(stdin);
+		if (!k)
+			break;
+	}
+	
+}
+/*查找*/
+/*void seek()
+{
+	int i, item, flag;
+	char name[30], ID[19];
+
+	printf("------------------\n");
+	printf("-----1.按身份证号查询-----\n");
+	printf("-----2.按姓名查询-----\n");
+	printf("-----3.退出本菜单-----\n");
+	printf("------------------\n");
+	while (1)
+	{
+		printf("请选择子菜单编号:");
+		scanf("%d", &item);
+		flag = 0;
+		switch (item)
+		{
+		case 1:
+			printf("请输入要查询的人员的身份证号:\n");
+			scanf("%s", ID);
+			for (i = 0; person[i].ID; i++)
+				if (strcmp(ID, person[i].ID) == 0)
+				{
+					flag = 1;
+					printf("人员姓名\t身份证号\t性别\t所在地区\t出生日期\n");
+					printf("--------------------------------------------------------------------\n");
+					printf("%s\t%s\t%s\t%s\t%d年%d月%d日\n", person[i].name, person[i].ID, person[i].sex, person[i].area, person[i].year, person[i].month, person[i].day);
+				}
+			if (0 == flag)
+				printf("该ID不存在！\n"); break;
+		case 2:
+			printf("请输入要查询的居民的姓名:\n");
+			scanf("%s", name);
+			for (i = 0; person[i].name; i++)
+				if (strcmp(person[i].name, name) == 0)
+				{
+					flag = 1;
+					printf("人员姓名\t身份证号\t性别\t所在地区\t出生日期\n");
+					printf("--------------------------------------------------------------------\n");
+					printf("%s\t%s\t%s\t%s\t%d年%d月%d日\n", person[i].name, person[i].ID, person[i].sex, person[i].area, person[i].year, person[i].month, person[i].day);
+				}
+			if (0 == flag)
+				printf("该人员不存在！\n"); break;
+		case 3:return;
+		default:printf("请在1-3之间选择\n");
+		}
+	}
+}*/
+//将文件中的信息逐行读取到结构体数组中
+void in_read()
+{
+	FILE* fp1; int i=0;
+	char s1[1024];//该数组用于读取文件中第一行的栏目
+	if ((fp1 = fopen("F:\\register_ID.txt", "r")) == NULL)
+	{
+		printf("打开文件失败\n");
+		exit(0);
+	}
+	else
+	{
+		fgets(s1, 1024, fp1);//让文件位置指针指向下一行
+		for(i=0;feof(fp1)==0;i++)
+			fscanf(fp1,"%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, &person[i].year, &person[i].month, &person[i].day, person[i].area, person[i].ID, person[i].note);//读取信息
+	}
+	
+	n = i;
+	fclose(fp1);
+}
+//更新文件的内容
+void in_write()
+{
+	FILE* fp1;
+	int i;
+	if ((fp1 = fopen("F:\\register_ID.txt", "a")) == NULL)
+	{
+		printf("打开文件失败\n");
+		exit(0);
+	}
+	else
+	{
+		if(feof(fp1))
+		fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");
+		for (i = 0; i < n ; i++)
+		{
+			fprintf(fp1, "%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
+		}
+	}
+	fclose(fp1);
 }
