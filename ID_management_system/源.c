@@ -1,9 +1,28 @@
+
+
+//小组成员:210421419林敏、210421216贾梁
+//函数分工:sort()函数以及seek()函数是贾梁帮忙写的，其余都是我（林敏）写的
+//部分函数参考及界面构造参考自http://t.csdn.cn/LG417
+
+
+
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #define N 100000
+struct time
+{
+	int year;
+	int month;
+	int day;
+	char wk_day[4];
+	int h;
+	int m;
+	int s;
 
+};
 struct people
 {
 	char name[30];//姓名
@@ -15,6 +34,9 @@ struct people
 	int day;
 	char note[100];
 	char test[10];
+	struct time mark_time;
+	
+	
 } person[N];//最大人数可更改
 
 int  n = 0;//n代表当前录入的人数
@@ -22,6 +44,7 @@ int k=1;
 int flag;
 char path1[100];//读取的路径
 char path2[100];//保存的路径
+
 //函数声明
 
 void trans_ID(struct people* person);
@@ -38,6 +61,8 @@ void flush(char path2[]);
 void fetch_path();
 void screen();
 void huge_swap(struct people* a, struct people* b);
+void fetch_time(struct people* person);
+
 
 //本程序将实现输入ID后，读取相应信息，再实现居民信息的添加、删除、查找、排序、筛选、刷新和保存功能
 int main()
@@ -53,6 +78,7 @@ int main()
 	system("pause");
 	return 0;
 }
+//帮助函数
 void help()
 {
 	printf("\n0.欢迎使用系统帮助！\n");
@@ -62,6 +88,7 @@ void help()
 	printf("\n4.谢谢您的使用！\n");
 	system("pause");
 }
+//菜单函数
 void menu()
 {
 	
@@ -80,9 +107,9 @@ void menu()
 	printf("     *********************************************     \n");
 	printf("     * 4.查询居民信息    * * 5.排序          *     \n");
 	printf("     *********************************************     \n");
-	printf("     * 6.保存操作        * * 7.筛选出阳性     *     \n");
+	printf("     * 6. 显示当前信息      * * 7.筛选出阳性     *     \n");
 	printf("     ********************** **********************     \n");
-	printf("     * 8.显示当前信息     * * 9.退出系统      *     \n");
+	printf("     * 8.  保存操作    * * 9.退出系统      *     \n");
 	printf("     ********************** **********************     \n");
 	printf("     ----------------------   ----------------------   \n");
 	printf("请选择菜单编号:");
@@ -96,9 +123,9 @@ void menu()
 	case 3:flush(path2); break;
 	case 4:seek(); break;
 	case 5:sort(); break;
-	case 6:save(path2); break;
+	case 6:display(); break;
 	case 7:screen(); break;
-	case 8:display(); break;
+	case 8:save(path2); break;
 	case 9:
 		k = 0;
 		printf("即将退出程序!\n");
@@ -322,8 +349,20 @@ void in_read(char path1[])
 	else
 	{
 		fgets(s1, 1024, fp1);//让文件位置指针指向下一行
-		for(i=0;feof(fp1)==0;i++)
-			fscanf(fp1, "%s%s%d年%d月%d日%s%s%s%s\n", person[i].name, person[i].sex, &person[i].year, &person[i].month, &person[i].day, person[i].area, person[i].ID, person[i].test, person[i].note);
+		for (i = 0; feof(fp1) == 0; i++)
+		{
+			
+			fscanf(fp1, "%s%s%d年%d月%d日%s%s%s%s", person[i].name, person[i].sex, &person[i].year, 
+				&person[i].month, &person[i].day, person[i].area, person[i].ID, person[i].test, person[i].note);
+			fscanf(fp1, "%d年%d月%d日(%s)%d时%d分%d秒\n",
+				&person[i].mark_time.year, 
+				&person[i].mark_time.month, 
+				&person[i].mark_time.day, 
+				&person[i].mark_time.wk_day, 
+				&person[i].mark_time.h, 
+				&person[i].mark_time.m, 
+				&person[i].mark_time.s);//读取登记时间
+		}
 	}
 	
 	n = i;//读出已录入的人数
@@ -335,6 +374,7 @@ void save(char path2[])
 {
 	printf("保存中......请勿退出");
 	FILE* fp1;
+	
 	int i;
 	rewind(stdin);
 	if ((fp1 = fopen(path2, "w+")) == NULL)
@@ -344,14 +384,25 @@ void save(char path2[])
 	}
 	else
 	{
-			fprintf(fp1, "姓名\t性别\t出生日期\t\t\t户籍所在地\t\t\t\t身份证号\t\t\t\t48小时核酸检测结果\t备注\n");
+			fprintf(fp1, "姓名\t性别\t出生日期\t\t\t户籍所在地\t\t\t\t身份证号\t\t\t\t48小时核酸检测结果\t备注\t\t登记时间\n");
 		for (i = 0; i <n ; i++)
 		{
-			fprintf(fp1, "%s\t%s\t%4d年%2d月%2d日\t\t%s\t\t%s\t\t%s\t\t\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID,person[i].test, person[i].note);
+			fetch_time(&person[i]);
+			fprintf(fp1, "%s\t%s\t%4d年%2d月%2d日\t\t%s\t\t%s\t\t%s\t\t\t\t%s", person[i].name, person[i].sex, 
+				person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID,person[i].test, person[i].note);
+			fprintf(fp1, "\t\t%d年%d月%d日(%s)%d时%d分%d秒\n",
+				person[i].mark_time.year,
+				person[i].mark_time.month,
+				person[i].mark_time.day,
+				person[i].mark_time.wk_day,
+				person[i].mark_time.h,
+				person[i].mark_time.m,
+				person[i].mark_time.s);
 		}
 	}
 	fclose(fp1);
 	printf("保存成功！");
+
 	system("pause");
 }
 //显示当前居民信息
@@ -359,10 +410,21 @@ void display()
 {
 	int i;
 	
-	printf("姓名\t性别\t出生日期\t\t户籍所在地\t\t\t身份证号\t\t\t备注\n");
+	printf( "姓名\t性别\t出生日期\t\t\t户籍所在地\t\t\t\t身份证号\t\t\t\t48小时核酸检测结果\t备注\t\t登记时间\n");
 	for (i = 0; i < n; i++)
-		printf("%3s\t%1s\t%4d年%2d月%2d日\t\t%10s\t\t%18s\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
-	
+	{
+		fetch_time(&person[i]);
+		printf("%s\t%s\t%4d年%2d月%2d日\t\t%s\t\t%s\t\t%s\t\t\t\t%s", person[i].name, person[i].sex,
+			person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].test, person[i].note);
+		printf("\t\t%d年%d月%d日(%s)%d时%d分%d秒\n",
+			person[i].mark_time.year,
+			person[i].mark_time.month,
+			person[i].mark_time.day,
+			person[i].mark_time.wk_day,
+			person[i].mark_time.h,
+			person[i].mark_time.m,
+			person[i].mark_time.s);
+	}
 	system("pause");
 }
 //清空文件内容，利用了文件打开方式中的"w"模式会清空文件的功能
@@ -379,14 +441,13 @@ void flush(char path2[])
 	else
 	{
 		printf("清空成功!\n");
+		in_read(path1);//刷新内存
 	}
 	system("pause");
 }
 //按姓名排序
 void sort() 
 {
-	
-	
 	int i, j,k;
 	printf("排序方式:[1]按姓名升序[2]按姓名降序[3]按ID升序[4]按ID降序\n");
 		scanf("%d", &k);
@@ -434,9 +495,7 @@ void sort()
 				}
 			}break;
 			default: break;
-
 		}
-
 }
 //获取路径
 void fetch_path()
@@ -493,9 +552,38 @@ void huge_swap(struct people *a,struct people *b)
 void screen()
 {
 	int i;
-	printf("姓名\t性别\t出生日期\t\t户籍所在地\t\t\t身份证号\t\t\t备注\n");
+	printf("姓名\t性别\t出生日期\t\t\t户籍所在地\t\t\t\t身份证号\t\t\t\t48小时核酸检测结果\t备注\t\t登记时间\n");
 	for(i=0;i<n;i++)
-		if(strcmp(person[i].test,"阳性")==0)
-			printf("%3s\t%1s\t%4d年%2d月%2d日\t\t%10s\t\t%18s\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
+		if (strcmp(person[i].test, "阳性") == 0)
+		{
+
+			fetch_time(&person[i]);
+			printf("%s\t%s\t%4d年%2d月%2d日\t\t%s\t\t%s\t\t%s\t\t\t\t%s", person[i].name, person[i].sex,
+				person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].test, person[i].note);
+			printf("\t\t%d年%d月%d日(%s)%d时%d分%d秒\n",
+				person[i].mark_time.year,
+				person[i].mark_time.month,
+				person[i].mark_time.day,
+				person[i].mark_time.wk_day,
+				person[i].mark_time.h,
+				person[i].mark_time.m,
+				person[i].mark_time.s);
+		}
+
+}
+//获取当前系统时间存到结构体中
+void fetch_time(struct people *person)
+{
+	time_t current = time(NULL);//time()函数获取当前日历时间存到结构体变量current中
+	char* wday_name[] = { "日","一","二","三","四","五","六" };
+	struct tm* timer = localtime(&current);//分解时间（系统时间）
+	
+	person->mark_time.year = timer->tm_year + 1900;
+	person->mark_time.month = timer->tm_mon + 1;
+	person->mark_time.day= timer->tm_mday;
+	strcpy(person->mark_time.wk_day, wday_name[timer->tm_wday]);
+	person->mark_time.h = timer->tm_hour;
+	person->mark_time.m = timer->tm_min;
+	person->mark_time.s = timer->tm_sec;
 
 }
