@@ -14,29 +14,36 @@ struct people
 	int month;
 	int day;
 	char note[100];
-} person[N];
+
+} person[N];//最大人数可更改
+
 int  n = 0;//n代表当前录入的人数
+int k=1;
 int flag;
-void trans_ID();
+char path1[100];//读取的路径
+char path2[100];//保存的路径
+//函数声明
+
+void trans_ID(struct people* person);
 void help();
 void seek();
-void in_read();
+void in_read(char path1[]);
+void save(char path2[]);
 void insert();
 void del();
 void display();
-void save();
 void menu();
-void in_write();
+void sort();
+void flush();
+void path_edit();
+
 //本程序将实现输入ID后，读取相应信息，再实现居民信息的添加、删除、查找、排序、筛选、刷新和保存功能
 int main()
 { 
 	
-	
-	
-	
-	
-	
-	
+	path_edit();
+	sort();
+	save(path2);
 	system("pause");
 	return 0;
 }
@@ -48,7 +55,7 @@ void help()
 	printf("\n3.增加居民信息后,切记保存;\n");
 	printf("\n4.谢谢您的使用！\n");
 }
-/*void menu()
+void menu()
 {
 	int num;
 	printf(" \n\n                    \n\n");
@@ -58,13 +65,13 @@ void help()
 	printf("*********************系统功能菜单*************************       \n");
 	printf("     ----------------------   ----------------------   \n");
 	printf("     *********************************************     \n");
-	printf("     * 0.系统帮助及说明  * *  1.刷新居民信息   *     \n");
+	printf("     * 0.系统帮助及说明  * *  1.清空居民信息   *     \n");
 	printf("     *********************************************     \n");
-	printf("     * 2.查询居民信息    * *   *     \n");
+	printf("     * 2.查询居民信息    * *  3.增加居民信息 *     ");
 	printf("     *********************************************     \n");
-	printf("     * 4.增加居民信息    * *  5.按ID删除信息 *     \n");
+	printf("     * 4.按ID删除信息    * *  5.显示当前信息 *     \n");
 	printf("     *********************************************     \n");
-	printf("     * 6.显示当前信息    * *  7.保存当前居民信息*     \n");
+	printf("     * 6.保存操作    * *  *     \n");
 	printf("     ********************** **********************     \n");
 	printf("     * 8.退出系统        *                            \n");
 	printf("     **********************                            \n");
@@ -76,18 +83,18 @@ void help()
 	case 0:help(); break;
 	case 1:flush(); break;
 	case 2:seek(); break;
-	case 3:; break;
-	case 4:insert(); break;
-	case 5:del(); break;
-	case 6:display(); break;
-	case 7:save(); break;
+	case 3:insert(); break;
+	case 4:del(); break;
+	case 5:display(); break;
+	case 6:; break;
+	case 7:save(path2); break;
 	case 8:
 		k = 0;
 		printf("即将退出程序!\n");
 		break;
 	default:printf("请在0-8之间选择\n");
 	}
-}*/
+}
 //本函数将实现添加居民信息的功能
 void insert()
 {
@@ -96,7 +103,7 @@ void insert()
 	int k;//判断
 	int i=0,j,m=0;//m用于记录已录入的人数
 	int flag; 
-	in_read();
+	in_read(path1);
 	i = n;
 	while (1)
 	{
@@ -139,7 +146,7 @@ void insert()
 			break;
 		}
 	}
-	in_write();
+	
 	
 }
 //将已知身份证号转换为具体信息
@@ -201,7 +208,7 @@ void del()
 {
 	
 	char ID[19]; int i, j, flag = 0,k;//flag记录是否删除成功
-	in_read();
+	in_read(path1);
 	while (1)
 	{
 		printf("请输入要删除的居民的身份证号：");
@@ -220,7 +227,7 @@ void del()
 		{
 			printf("删除成功\n");
 			n--;//录入总人数减一
-			in_write();
+			
 		}
 		else
 		{
@@ -293,11 +300,11 @@ void seek()
 	}
 }
 //将文件中的信息逐行读取到结构体数组中
-void in_read()
+void in_read(char path1[])
 {
 	FILE* fp1; int i=0;
 	char s1[1024];//该数组用于读取文件中第一行的栏目
-	if ((fp1 = fopen("F:\\register_ID.txt", "a+")) == NULL)
+	if ((fp1 = fopen(path1, "a+")) == NULL)
 	{
 		printf("打开文件失败\n");
 		exit(0);
@@ -313,30 +320,80 @@ void in_read()
 	fclose(fp1);
 }
 //更新文件的内容
-void in_write()
+void save(char path2[])
 {
 	FILE* fp1;
 	int i;
-	if ((fp1 = fopen("F:\\register_ID.txt", "w+")) == NULL)
+	rewind(stdin);
+	if ((fp1 = fopen(path2, "w+")) == NULL)
 	{
 		printf("打开文件失败\n");
 		exit(0);
 	}
 	else
 	{
-		getc(fp1);
-		if (feof(fp1) == 1)
-		{
-			fseek(fp1, -1, SEEK_CUR);
-			fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");
-		}
-		else
-			fseek(fp1, -1, SEEK_CUR);
+			fprintf(fp1, "姓名\t性别\t出生日期\t\t\t户籍所在地\t\t\t身份证号\t\t\t备注\n");
 		for (i = 0; i <n ; i++)
 		{
-			fprintf(fp1, "%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
+			fprintf(fp1, "%3s\t%1s\t%4d年%2d月%2d日\t\t%10s\t\t%18s\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
 		}
 	}
 	fclose(fp1);
 }
-//显示当前学生信息
+//显示当前居民信息
+void display()
+{
+	int i;
+	in_read(path1);
+	printf("姓名\t性别\t出生日期\t\t户籍所在地\t\t\t身份证号\t\t\t备注\n");
+	for (i = 0; i < n; i++)
+		printf("%3s\t%1s\t%4d年%2d月%2d日\t\t%10s\t\t%18s\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
+	
+
+}
+//清空文件内容，利用了文件打开方式中的"w"模式会清空文件的功能
+void flush()
+{
+	FILE* fp;
+	char path[100];
+	printf("请输入要清空的文件的路径\n");
+	scanf("%s", path);
+	rewind(stdin);
+	if ((fp = fopen(path, "w")) == NULL)
+	{
+		printf("打开失败\n");
+	}
+	else
+	{
+		printf("清空成功!\n");
+	}
+}
+//排序
+void sort()
+{
+	
+	struct people temp;
+	int i, k, j;
+	for (i = 0; i < n - 1; i++) 
+	{
+		for (j = i+1; j < n; j++) 
+		{
+			if (strcmp(person[i].name, person[j].name) > 0) 
+			{
+				temp = person[i];
+				person[i] = person[j];
+				person[j] = temp;
+			}
+		}
+	}
+	
+}
+void path_edit()
+{
+	printf("请输入要读取的文件的路径：\n");
+	scanf("%s", path1);
+	rewind(stdin);
+	printf("请输入要写入的文件的路径:\n");
+	scanf("%s", path2);
+	rewind(stdin);
+}
