@@ -32,8 +32,9 @@ int main()
 { 
 	
 	
-	insert();
-	del();
+	
+	
+	
 	
 	
 	system("pause");
@@ -93,8 +94,10 @@ void insert()
 	
 	 
 	int k;//判断
-	int i=0,j;//用于记录已录入的人数
-	int flag;
+	int i=0,j,m=0;//m用于记录已录入的人数
+	int flag; 
+	in_read();
+	i = n;
 	while (1)
 	{
 		printf("请输入十八位身份证号：");
@@ -104,7 +107,7 @@ void insert()
 			flag = 0;//考虑了只有一组数据的情况
 			fgets(person[i].ID, 19, stdin);
 			rewind(stdin);//刷新输入缓冲区
-			for (j = 0; j <i; j++)
+			for (j = 0; j < i; j++)
 			{
 				if (strcmp(person[i].ID, person[j].ID) == 0)
 				{
@@ -112,31 +115,29 @@ void insert()
 					flag = 1;//确保了能在while循环中重新输入ID
 					break;
 				}
-				
-				
+
 			}
 		}
-		trans_ID( &person[i]); 
+		trans_ID(&person[i]);
 		printf("请输入姓名:");
-			
-		fgets(person[i].name,30,stdin);	
+
+		fgets(person[i].name, 30, stdin);
 		person[i].name[strlen(person[i].name) - 1] = '\0';//防止换行
-			
+
 		printf("请输入需要备注的信息：");
-			
+
 		fgets(person[i].note, 100, stdin);
 		person[i].note[strlen(person[i].note) - 1] = '\0';
-			
-		printf("是否继续添加居民信息,非0继续/0终止,当前已录入人数%d\n",i+1);
+
+		printf("是否继续添加居民信息,非0继续/0终止,当前已录入人数%d\n", m + 1);
 		scanf("%d", &k);
 		rewind(stdin);//刷新输入缓冲区
+		i++; m++;
 		if (k == 0)
 		{
-			n += i + 1;//保存了人数，方便后续写入文件
-			
+			n = i;//总人数更新
 			break;
 		}
-		i++;
 	}
 	in_write();
 	
@@ -157,10 +158,6 @@ void trans_ID(struct people *person)
 	}
 	else
 	{
-		
-		
-		
-		
 		while ((strncmp(person->ID, code_area, 6) != 0))//比较身份证号前六位和文件中的地区编码
 		{
 
@@ -208,7 +205,7 @@ void del()
 	while (1)
 	{
 		printf("请输入要删除的居民的身份证号：");
-		gets_s(ID, 19);//输入待删除居民信息的身份证号
+		fgets(ID, 19,stdin);//输入待删除居民信息的身份证号
 		rewind(stdin);//刷新输入缓冲区
 		for (i = 0; i < n; i++)
 		{
@@ -238,27 +235,29 @@ void del()
 	
 }
 /*查找*/
-/*void seek()
+void seek()
 {
 	int i, item, flag;
 	char name[30], ID[19];
 
-	printf("------------------\n");
-	printf("-----1.按身份证号查询-----\n");
-	printf("-----2.按姓名查询-----\n");
-	printf("-----3.退出本菜单-----\n");
-	printf("------------------\n");
+	
 	while (1)
 	{
+		printf("------------------\n");
+		printf("-----1.按身份证号查询-----\n");
+		printf("-----2.按姓名查询-----\n");
+		printf("-----3.退出本菜单-----\n");
+		printf("------------------\n");
 		printf("请选择子菜单编号:");
 		scanf("%d", &item);
+		rewind(stdin);
 		flag = 0;
 		switch (item)
 		{
 		case 1:
 			printf("请输入要查询的人员的身份证号:\n");
-			scanf("%s", ID);
-			for (i = 0; person[i].ID; i++)
+			fgets(ID, 19,stdin);
+			for (i = 0; i<n; i++)
 				if (strcmp(ID, person[i].ID) == 0)
 				{
 					flag = 1;
@@ -270,8 +269,9 @@ void del()
 				printf("该ID不存在！\n"); break;
 		case 2:
 			printf("请输入要查询的居民的姓名:\n");
-			scanf("%s", name);
-			for (i = 0; person[i].name; i++)
+			fgets(name, 30,stdin);
+			name[strlen(name) - 1] = '\0';//去掉换行符
+			for (i = 0; i<n; i++)
 				if (strcmp(person[i].name, name) == 0)
 				{
 					flag = 1;
@@ -284,14 +284,20 @@ void del()
 		case 3:return;
 		default:printf("请在1-3之间选择\n");
 		}
+		printf("是否继续?[0]否/[1]是");
+		int k;
+		scanf("%d", &k);
+		rewind(stdin);//刷新输入缓冲区
+		if (!k)
+			break;
 	}
-}*/
+}
 //将文件中的信息逐行读取到结构体数组中
 void in_read()
 {
 	FILE* fp1; int i=0;
 	char s1[1024];//该数组用于读取文件中第一行的栏目
-	if ((fp1 = fopen("F:\\register_ID.txt", "r")) == NULL)
+	if ((fp1 = fopen("F:\\register_ID.txt", "a+")) == NULL)
 	{
 		printf("打开文件失败\n");
 		exit(0);
@@ -303,7 +309,7 @@ void in_read()
 			fscanf(fp1,"%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, &person[i].year, &person[i].month, &person[i].day, person[i].area, person[i].ID, person[i].note);//读取信息
 	}
 	
-	n = i;
+	n = i;//读出已录入的人数
 	fclose(fp1);
 }
 //更新文件的内容
@@ -311,19 +317,26 @@ void in_write()
 {
 	FILE* fp1;
 	int i;
-	if ((fp1 = fopen("F:\\register_ID.txt", "a")) == NULL)
+	if ((fp1 = fopen("F:\\register_ID.txt", "w+")) == NULL)
 	{
 		printf("打开文件失败\n");
 		exit(0);
 	}
 	else
 	{
-		if(feof(fp1))
-		fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");
-		for (i = 0; i < n ; i++)
+		getc(fp1);
+		if (feof(fp1) == 1)
+		{
+			fseek(fp1, -1, SEEK_CUR);
+			fprintf(fp1, "姓名\t\t\t性别\t\t\t出生日期\t\t\t\t户籍所在地\t\t\t\t\t身份证号\t\t\t\t\t备注\n");
+		}
+		else
+			fseek(fp1, -1, SEEK_CUR);
+		for (i = 0; i <n ; i++)
 		{
 			fprintf(fp1, "%s\t\t\t%s\t\t\t%d年%d月%d日\t\t\t%s\t\t\t%s\t\t\t%s\n", person[i].name, person[i].sex, person[i].year, person[i].month, person[i].day, person[i].area, person[i].ID, person[i].note);
 		}
 	}
 	fclose(fp1);
 }
+//显示当前学生信息
